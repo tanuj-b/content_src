@@ -38,13 +38,12 @@ window.Quiz = Backbone.Model.extend({
              });
          }
     	 
-    	 if (!this.get('toggleBetweenOptions')) {
+    	 if (!this.get('questionIds')) {
              this.set({
-            	 toggleBetweenOptions: new Array()
+            	 questionIds: new Array()
              });
          }
     },
-    key: "questionSetIds",
 
     defaults: {
         'hasAttempted' : false,
@@ -146,7 +145,7 @@ window.Quiz = Backbone.Model.extend({
 	difficultyLevelInsights : function (){
 		var questionIds = this.getQuestionIds();
 		var len = questionIds.length;
-		var easy = 2; // define whats easy and difficult
+		var easy = 1; // define whats easy and difficult
 		var difficult = 4;
 		for(var i=0; i<len; i++ )
 		{
@@ -155,14 +154,14 @@ window.Quiz = Backbone.Model.extend({
   	       	var isCorrect = question.isOptionSelectedCorrect();
   	       	if(isCorrect==null){
   	       		// question not attempted
-  	       		if(difficulty<=easy){
+  	       		if(difficulty==easy){
   	       			// easy question missed
   	       		this.get('easyQuestionsMissed').push(i);
   	       		}
-  	       	} else if(difficulty<=easy && !(isCorrect)){
+  	       	} else if(difficulty==easy && !(isCorrect)){
   	    	   // easy questions you got wrong
   	    	   this.get('easyQuestionsIncorrect').push(i);
-  	       	}else if(difficulty>=difficult && isCorrect){
+  	       	}else if(difficulty==difficult && isCorrect){
   	    	   //this.difficultQuestionsAnswered
    	    	   this.get('difficultQuestionsAnswered').push(i);
   	       	}

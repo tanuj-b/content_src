@@ -16,8 +16,130 @@ var AppRouter = Backbone.Router.extend({
         "quizAnalyticsView":"quizAnalyticsView",
     },
     
-    // will shift this 
-	drawTimeChart : function (){
+    sync: function(){
+        sync.setUserId(1); //get actual account id and set it
+        alert(sync.fetchIdsFromCollection(quizzes));
+        alert(sync.fetchIdsFromLocalStorage(quizzes));
+     },
+
+
+    /**
+     * Routing logic added by ssachan 
+     * 
+     **/
+
+    initialize: function () {
+        /*
+         * To be replaced by sync. this is just for the demo
+         */
+        localStorage.clear(); //remove this line in final product.
+        quizzes.fetch({
+            success: function () {
+                console.log('init quizzes fetched');
+                quizQuestionSets.fetch({
+                    success: function () {
+                        console.log('init quiz question sets fetched');
+                        quizQuestions.fetch({
+                            success: function () {
+                                console.log('init quiz questions fetched');    
+                            }
+                        });
+                    }
+                });
+            }
+
+        });
+
+        practiceTests.fetch({
+            success: function () {
+                console.log('init quizzes fetched');
+                practiceQuestionSets.fetch({
+                    success: function () {
+                        console.log('init quiz question sets fetched');
+                        practiceQuestions.fetch({
+                            success: function () {
+                                console.log('init quiz questions fetched');    
+                            }
+                        });
+                    }
+                });
+            }
+        });
+        
+        sectionL1.fetch({
+        	 success: function () {
+                 console.log('init quizzes fetched');
+        	 }
+        });
+        
+        sectionL2.fetch({
+        	 success: function () {
+                 console.log('init quizzes fetched');
+        	 }
+        });
+        
+    },
+
+    landing: function () {
+        this.firstPage = true;
+        this.changePage(new LandingView());
+        return;
+    },
+
+    menu: function () {
+        this.changePage(new MenuView());
+    },
+
+    profile: function (id) {
+        this.changePage(new ProfileView({}));
+    },
+
+    quiz: function () {
+        /*
+         * set to local, fetch quizzes, read attempted?, display all with
+         * attempted <> true, those that need to be sync dimmed.
+         */
+        quizzes.reset();
+        quizQuestionSets.reset();
+        quizQuestions.reset();
+        console.log('after reset before second fetch');
+        quizzes.remote = false;
+        quizzes.local = true;
+        quizzes.fetch({
+            success: function () {
+                console.log('local quizzes fetched');
+                quizQuestionSets.remote = false;
+                quizQuestionSets.local = true;
+                quizQuestionSets.fetch({
+                    success: function () {
+                        console.log('local question sets fetched');
+                        quizQuestions.remote = false;
+                        quizQuestions.local = true;
+                        quizQuestions.fetch({
+                            success: function () {
+                                console.log('local questions fetched');
+                            }
+                        });
+                    }
+                });
+            }
+        });
+        this.changePage(new QuizTopicsView());
+    },
+
+    startQuiz: function (id) {
+        currentQuiz = quizzes.get(id);
+        quizView = new QuizView({
+            model: currentQuiz,
+            index: 0,
+        });
+        this.changePage(quizView);
+    	timer.setUpdateFunction(helper.updateQuizTimer, []);
+        timer.reset();
+        quizView.renderQuestion();
+        timer.start();
+    },
+    drawTimeChart : function (){
 		var questionIds = currentQuiz.getQuestionIds();
 		var len = questionIds.length;
 		var timeTaken = new Array();
@@ -79,146 +201,17 @@ var AppRouter = Backbone.Router.extend({
 	            }]
 	        });
 	},
-	
-    sync: function(){
-        sync.setUserId(1); //get actual account id and set it
-        alert(sync.fetchIdsFromCollection(quizzes));
-        alert(sync.fetchIdsFromLocalStorage(quizzes));
-     },
-
-
-    /**
-     * Routing logic added by ssachan 
-     * 
-     **/
-
-    initialize: function () {
-        /*
-         * To be replaced by sync. this is just for the demo
-         */
-        //localStorage.clear(); //remove this line in final product.
-/*
-        quizzes.fetch({
-            success: function () {
-                console.log('init quizzes fetched');
-                quizQuestionSets.fetch({
-                    success: function () {
-                        console.log('init quiz question sets fetched');
-                        quizQuestions.fetch({
-                            success: function () {
-                                console.log('init quiz questions fetched');    
-                            }
-                        });
-                    }
-                });
-            }
-
-        });
-
-        practiceTests.fetch({
-            success: function () {
-                console.log('init quizzes fetched');
-                practiceQuestionSets.fetch({
-                    success: function () {
-                        console.log('init quiz question sets fetched');
-                        practiceQuestions.fetch({
-                            success: function () {
-                                console.log('init quiz questions fetched');    
-                            }
-                        });
-                    }
-                });
-            }
-<<<<<<< HEAD
-        });
-        
-        sectionL1.fetch({
-        	 success: function () {
-                 console.log('init quizzes fetched');
-        	 }
-        });
-        
-        sectionL2.fetch({
-        	 success: function () {
-                 console.log('init quizzes fetched');
-        	 }
-        });
-        
-        });*/
-
-    },
-
-    landing: function () {
-        this.firstPage = true;
-        this.changePage(new LandingView());
-        return;
-    },
-
-    menu: function () {
-        this.changePage(new MenuView());
-    },
-
-    profile: function (id) {
-        this.changePage(new ProfileView({}));
-    },
-
-    quiz: function () {
-        /*
-         * set to local, fetch quizzes, read attempted?, display all with
-         * attempted <> true, those that need to be sync dimmed.
-         */
-        quizzes.reset();
-        quizQuestionSets.reset();
-        quizQuestions.reset();
-        console.log('after reset before second fetch');
-        quizzes.remote = false;
-        quizzes.local = true;
-        quizzes.fetch({
-            success: function () {
-                console.log('local quizzes fetched');
-                quizQuestionSets.remote = false;
-                quizQuestionSets.local = true;
-                quizQuestionSets.fetch({
-                    success: function () {
-                        console.log('local question sets fetched');
-                        quizQuestions.remote = false;
-                        quizQuestions.local = true;
-                        quizQuestions.fetch({
-                            success: function () {
-                                console.log('local questions fetched');
-                            }
-                        });
-                    }
-                });
-            }
-        });
-        this.changePage(new QuizTopicsView());
-    },
-
-    startQuiz: function (id) {
-        currentQuiz = quizzes.models[id];
-        quizView = new QuizView({
-            model: currentQuiz,
-            index: 0,
-        });
-        this.changePage(quizView);
-    	timer.setUpdateFunction(helper.updateQuizTimer, []);
-        timer.reset();
-        quizView.renderQuestion();
-        timer.start();
-        //currentQuiz.get('timer').start();
-    },
-
     stopQuiz: function () {
     	currentQuiz.calculateScores();
     	app.changePage(new QuizResultsView({
             model: currentQuiz
         }));
+        this.drawTimeChart();
     },
     
     quizDetailedView: function () {
     	//$('body').empty();
-    	//currentQuiz.set('hasAttempted',true);
+    	currentQuiz.set('hasAttempted',true);
     	 quizView.close();
     	 quizView = new QuizView({
              model: currentQuiz,
@@ -226,7 +219,6 @@ var AppRouter = Backbone.Router.extend({
          });
          this.changePage(quizView);
          quizView.renderQuestion();
-
     },
     
     quizAnalyticsView: function () {
@@ -264,7 +256,7 @@ var AppRouter = Backbone.Router.extend({
     },
     
     startPractice: function (id) {
-        currentPractice = practiceTests.models[id];
+        currentPractice = practiceTests.get(id);
         practiceView = new PracticeView({
             model: currentPractice,
             index: 0,
