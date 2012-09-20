@@ -5,18 +5,7 @@ window.LandingView = Backbone.View.extend({
 	},
 
 	events : {
-		'click #flogin' : 'fConnect',
-		'click #glogin' : 'gConnect',
 
-	},
-
-	fConnect : function() {
-		user.login();
-		//also send the details to the server
-	},
-
-	gConnect : function() {
-		glogin();
 	},
 
 	render : function() {

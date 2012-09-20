@@ -1,3 +1,5 @@
+
+
 //Config Variables
 
 var SEPARATOR = '|:';
@@ -7,21 +9,14 @@ var config_mobile_android = {
 	templatePath : "",
 	serverUrl : 'http://localhost/nero/api/',
 	edition : '0',
+    editionName : 'mobile',
     tmplatesFolder : "tpl-mobile",
     phonegap : false,
-    viewsArray : [	'LandingView', 
-    				'QuizQuestionView',
-    				'FlashCardListView',
-    				'FlashCardListItemView',
-    				'FlashCardView',
-    				'MenuView',
-    				'PracticeTopicsView',
-    				'PracticeQuestionView',
-    				'QuizTopicsView',
-    				'QuizResultsView',
-    				'ProfileView',
-    				'QuizAnalyticsView'
-    			]
+    viewsArray : [  
+                    'LandingView',
+                    'MenuView',
+                    'MainView'
+                ]
 };
 
 var config_mobile_web = {
@@ -29,29 +24,19 @@ var config_mobile_web = {
 	templatePath : "",
 	serverUrl : 'http://localhost/nero/api/',
 	edition : '1',
+    editionName : 'web',
     tmplatesFolder : "tpl-web",
     phonegap : false,
-    viewsArray : [	'HeaderView',
+    viewsArray : [	
                   	'LandingView',
                   	'MenuView',
-                  	'QuizView',
-    				'QuizQuestionView',
-    				'FlashCardListView',
+                  	'FlashCardListView',
     				'FlashCardListItemView',
-    				'FlashCardView',
-    				'MenuView',
-    				'PracticeTopicsView',
-    				'PracticeView',
-    				'PracticeQuestionView',
-    				'QuizTopicsView',
-    				'QuizResultsView',
-    				'ProfileView',
-    				'PerformanceView',
-    				'QuizAnalyticsView'
+    				'FlashCardView'
     			]
 };
 
 //var Config = config_mobile_android;	
-var Config = config_mobile_web;	
+var Config = config_mobile_android;	
     
 
