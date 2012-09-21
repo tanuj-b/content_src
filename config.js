@@ -11,6 +11,7 @@ var config_mobile_android = {
 	edition : '0',
     editionName : 'mobile',
     tmplatesFolder : "tpl-mobile",
+    assetPath : '',
     phonegap : false,
     viewsArray : [  
                     'LandingView',
@@ -23,6 +24,7 @@ var config_mobile_web = {
 	syncStoragePath : "",
 	templatePath : "",
 	serverUrl : 'http://localhost/nero/api/',
+    assetPath : '',
 	edition : '1',
     editionName : 'web',
     tmplatesFolder : "tpl-web",

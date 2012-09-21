@@ -204,6 +204,8 @@ var Reveal = (function(){
 		cueAutoSlide();
 
 		navigateTo(0);
+		var horizontalSlides = Array.prototype.slice.call( document.querySelectorAll( HORIZONTAL_SLIDES_SELECTOR ) );
+		document.querySelector("#slideCount").innerHTML = horizontalSlides.length;
 	}
 
 	/**
@@ -351,9 +353,9 @@ var Reveal = (function(){
 			// l, right
 			case 76: case 39: navigateRight(); triggered = true; break;
 			// k, up
-			case 75: case 38: navigateUp(); triggered = true; break;
+	//		case 75: case 38: navigateUp(); triggered = true; break;
 			// j, down
-			case 74: case 40: navigateDown(); triggered = true; break;
+//			case 74: case 40: navigateDown(); triggered = true; break;
 			// home
 			case 36: navigateTo( 0 ); triggered = true; break;
 			// end
@@ -802,6 +804,9 @@ var Reveal = (function(){
 
 		if( routes.left ) dom.controlsLeft.classList.add( 'enabled' );
 		if( routes.right ) dom.controlsRight.classList.add( 'enabled' );
+
+		document.querySelector("#currentSlide").innerHTML = indexh+1;
+
 		//if( routes.up ) dom.controlsUp.classList.add( 'enabled' );
 		//if( routes.down ) dom.controlsDown.classList.add( 'enabled' );
 	}
@@ -841,18 +846,7 @@ var Reveal = (function(){
 	 */
 	function nextFragment() {
 		// Vertical slides:
-		if( document.querySelector( VERTICAL_SLIDES_SELECTOR + '.present' ) ) {
-			var verticalFragments = document.querySelectorAll( VERTICAL_SLIDES_SELECTOR + '.present .fragment:not(.visible)' );
-			if( verticalFragments.length ) {
-				verticalFragments[0].classList.add( 'visible' );
-
-				// Notify subscribers of the change
-				dispatchEvent( 'fragmentshown', { fragment: verticalFragments[0] } );
-				return true;
-			}
-		}
-		// Horizontal slides:
-		else {
+	
 			var horizontalFragments = document.querySelectorAll( HORIZONTAL_SLIDES_SELECTOR + '.present .fragment:not(.visible)' );
 			if( horizontalFragments.length ) {
 				horizontalFragments[0].classList.add( 'visible' );
@@ -861,7 +855,6 @@ var Reveal = (function(){
 				dispatchEvent( 'fragmentshown', { fragment: horizontalFragments[0] } );
 				return true;
 			}
-		}
 
 		return false;
 	}
@@ -874,18 +867,7 @@ var Reveal = (function(){
 	 */
 	function previousFragment() {
 		// Vertical slides:
-		if( document.querySelector( VERTICAL_SLIDES_SELECTOR + '.present' ) ) {
-			var verticalFragments = document.querySelectorAll( VERTICAL_SLIDES_SELECTOR + '.present .fragment.visible' );
-			if( verticalFragments.length ) {
-				verticalFragments[ verticalFragments.length - 1 ].classList.remove( 'visible' );
-
-				// Notify subscribers of the change
-				dispatchEvent( 'fragmenthidden', { fragment: verticalFragments[ verticalFragments.length - 1 ] } );
-				return true;
-			}
-		}
-		// Horizontal slides:
-		else {
+		
 			var horizontalFragments = document.querySelectorAll( HORIZONTAL_SLIDES_SELECTOR + '.present .fragment.visible' );
 			if( horizontalFragments.length ) {
 				horizontalFragments[ horizontalFragments.length - 1 ].classList.remove( 'visible' );
@@ -894,7 +876,6 @@ var Reveal = (function(){
 				dispatchEvent( 'fragmenthidden', { fragment: horizontalFragments[ horizontalFragments.length - 1 ] } );
 				return true;
 			}
-		}
 		
 		return false;
 	}
@@ -915,7 +896,7 @@ var Reveal = (function(){
 	 * @param {Number} v The vertical index of the slide to show
 	 */
 	function navigateTo( h, v ) {
-		slide( h, v );
+		slide( h, 0 );
 	}
 	
 	function navigateLeft() {
@@ -945,7 +926,7 @@ var Reveal = (function(){
 				var previousSlide = document.querySelector( '.reveal .slides>section.past:nth-child(' + indexh + ')' );
 
 				if( previousSlide ) {
-					indexv = ( previousSlide.querySelectorAll('section').length + 1 ) || 0;
+					indexv = 0;
 					indexh --;
 					slide();
 				}
@@ -1003,22 +984,22 @@ var Reveal = (function(){
 
 			// If a slide is specified, return the indices of that slide
 			if( slide ) {
-				var isVertical = !!slide.parentNode.nodeName.match( /section/gi );
+				//var isVertical = !!slide.parentNode.nodeName.match( /section/gi );
 				var slideh = isVertical ? slide.parentNode : slide;
 
 				// Select all horizontal slides
 				var horizontalSlides = Array.prototype.slice.call( document.querySelectorAll( HORIZONTAL_SLIDES_SELECTOR ) );
 
 				// Now that we know which the horizontal slide is, get its index
-				h = Math.max( horizontalSlides.indexOf( slideh ), 0 );
+				h = Math.max( horizontalSlides.indexOf( slide ), 0 );
 
 				// If this is a vertical slide, grab the vertical index
-				if( isVertical ) {
-					v = Math.max( Array.prototype.slice.call( slide.parentNode.children ).indexOf( slide ), 0 );
-				}
+			//	if( isVertical ) {
+			//		v = Math.max( Array.prototype.slice.call( slide.parentNode.children ).indexOf( slide ), 0 );
+			//	}
 			}
 
-			return { h: h, v: v };
+			return { h: h, v: 0 };
 		},
 
 		// Returns the previous slide element, may be null

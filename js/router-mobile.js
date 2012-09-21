@@ -33,6 +33,7 @@ var AppRouter = Backbone.Router.extend({
 
     main: function () {
         this.changePage(new MainView());
+
         Reveal.initialize({
         controls: true,
         progress: true,
@@ -44,9 +45,11 @@ var AppRouter = Backbone.Router.extend({
         transition: 'linear', // default/cube/page/concave/linear(2d)
 
         // Optional libraries used to extend on reveal.js
-        dependencies: []
+        dependencies: [{ src: 'js/lib/classList.js', condition: function() { return !document.body.classList; } }]
   
       });
+
+
     },
     
     flashcardlist: function () {
@@ -119,8 +122,9 @@ var AppRouter = Backbone.Router.extend({
     },
 
     changePage: function (page) {
-        $(page.el).attr('data-role', 'page');
+        //note change in code here.
         page.render();
+        $(page.el).attr('data-role', 'page');
         $('body').append($(page.el));
         $(page.el).page();
         var transition = $.mobile.defaultPageTransition;
