@@ -38,3 +38,29 @@ Backbone.View.prototype.close = function () {
         this.onClose();
     }
 };
+
+if (Config.phonegap == false) {
+    $(document).ready(function () {
+        helper.loadTemplate(Config.viewsArray, function () {
+            app = new AppRouter();
+            Backbone.history.start();
+        });
+    });
+}
+
+function init() {
+    if(Config.phonegap)
+        document.addEventListener("deviceready", onDeviceReady, true);
+}
+
+var onDeviceReady = function () {
+    helper.loadTemplate(Config.viewsArray, function () {
+        app = new AppRouter();
+
+        //Request File System 
+        if(Config.phonegap){
+          window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, fileSystemAccess.gotFS, fileSystemAccess.fail);
+        }
+        Backbone.history.start();
+    });
+};

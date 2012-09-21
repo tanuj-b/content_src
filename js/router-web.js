@@ -3,63 +3,27 @@ var AppRouter = Backbone.Router.extend({
     routes: {
         "": "landing",
         "menu": "menu",
-        "profile": "profile",
-        "practice": "practice",
-        "quiz": "quiz",
-        "flashcards": "flashcards",
-        "quiz/:id": "startQuiz",
-        "practice/:id": "startPractice",
-        "getQuestion/:index": "getQuestion",
-        "performance": "performance"
+        "main": "main",
+        "flashcards": "flashcardlist",
+        "flashcards/:id": "flashcards",
     },
+    
+    sync: function(){
+        sync.setUserId(1); //get actual account id and set it
+        //other sync functions here
+     },
 
     initialize: function () {
-        this.headerView = new HeaderView({
-            el: $('header')
-        });
         /*
          * To be replaced by sync. this is just for the demo
          */
         localStorage.clear(); //remove this line in final product.
-
-        quizzes.fetch({
-            success: function () {
-                console.log('init quizzes fetched');
-                quizQuestionSets.fetch({
-                    success: function () {
-                        console.log('init quiz question sets fetched');
-                        quizQuestions.fetch({
-                            success: function () {
-                                console.log('init quiz questions fetched');
-                            }
-                        });
-                    }
-                });
-            }
-
-        });
-
-        practiceTests.fetch({
-            success: function () {
-                console.log('init quizzes fetched');
-                practiceQuestionSets.fetch({
-                    success: function () {
-                        console.log('init quiz question sets fetched');
-                        practiceQuestions.fetch({
-                            success: function () {
-                                console.log('init quiz questions fetched');
-                            }
-                        });
-                    }
-                });
-            }
-        });
+        
     },
-
+    
     landing: function () {
-        new LandingView({
-            el: $('#content')
-        });
+        this.firstPage = true;
+        this.changePage(new LandingView());
         return;
     },
 
@@ -67,150 +31,110 @@ var AppRouter = Backbone.Router.extend({
         this.changePage(new MenuView());
     },
 
-    profile: function (id) {
-        this.changePage(new ProfileView({}));
-    },
+    main: function () {
+        this.changePage(new MainView());
 
-    performance: function (id) {
-        new PerformanceView({el:$('#content')});
-    },
+        Reveal.initialize({
+        controls: true,
+        progress: true,
+        history: false,
+        keyboard: true,
+        mouseWheel : false,
+        
+        theme: 'simple', // available themes are in /css/theme
+        transition: 'linear', // default/cube/page/concave/linear(2d)
 
-    flashcards: function () {
-        this.changePage(new WordListView({}));
-    },
+        // Optional libraries used to extend on reveal.js
+        dependencies: [{ src: 'js/lib/classList.js', condition: function() { return !document.body.classList; } }]
+  
+      });
 
-    quiz: function () {
-        /*
-         * set to local, fetch quizzes, read attempted?, display all with
-         * attempted <> true, those that need to be sync dimmed.
-         */
-        quizzes.reset();
-        quizQuestionSets.reset();
-        quizQuestions.reset();
-        console.log('after reset before second fetch');
-        quizzes.remote = false;
-        quizzes.local = true;
-        quizzes.fetch({
+
+    },
+    
+    flashcardlist: function () {
+        var context = this;
+        flashCardLists.fetch({
             success: function () {
-                console.log('local quizzes fetched');
-                quizQuestionSets.remote = false;
-                quizQuestionSets.local = true;
-                quizQuestionSets.fetch({
-                    success: function () {
-                        console.log('local question sets fetched');
-                        quizQuestions.remote = false;
-                        quizQuestions.local = true;
-                        quizQuestions.fetch({
-                            success: function () {
-                                console.log('local questions fetched');
-                            }
-                        });
-                    }
-                });
+                console.log('flash cards fetched');
+                context.changePage(new FlashCardListView({
+                    model: flashCardLists
+                }));
             }
         });
-        new QuizTopicsView({
-            el: $('#content')
-        });
     },
 
-    startQuiz: function (id) {
-        currentQuiz = quizzes.get(id);
-        new QuizView({
-            model: currentQuiz,
-            index: 0,
-            el: $('#content')
+    flashcards: function (id) {
+        var context = this;
+        var currentFlashCardList = flashCardLists.get(id);
+        flashCardIDs = currentFlashCardList.get("wordIds").split("|:");
+
+        currentFlashCards = new FlashCardCollection();
+
+        _.each(flashCardIDs, function (id) {
+            currentFlashCards.add({
+                id: id
+            });
+
         });
-        timer.setUpdateFunction(helper.updateQuizTimer, []);
-        timer.reset();
-        timer.start();
+
+        //This is where flashCards are being fetched and stored into a Collection.
+        //I have added a model with just id attribute set. I am running model.fetch() on each item in collection.
+        //The first fetch loads them and saves them
+        //creating a deferred variable and chaining them for calling final success callback
+
+        var successCounter = 0,
+            dfd = [];
+        currentFlashCards.forEach(
+
+        function (item) {
+            dfd[successCounter] = item.fetch({
+                add: true
+            });
+            successCounter++;
+        });
+        $.when.apply(this, dfd).then(function () {
+            currentFlashCardList.set("currentFlashCard", 1);
+            activeFlashCardView = new FlashCardView({
+                flashCardList: currentFlashCardList,
+                flashCards: currentFlashCards
+            });
+            context.changePage(activeFlashCardView);
+            activeFlashCardView.showCard(1);
+
+            //This following function should ideally bind to views events.
+            /*$("input[type='radio']").click(function(){
+            if($(this).hasClass("on")){
+                $(this).removeAttr('checked');
+            }
+            $(this).toggleClass("on");
+        }).filter(":checked").addClass("on");*/
+        });
+
+        //Make provisions for failure
     },
 
-    stopQuiz: function () {
-    	currentQuiz.calculateScores();
-        new QuizResultsView({
-            model: currentQuiz,
-            el: $('#content')
-        });
-        //this.drawTimeChart();
-    },
-    
-    quizDetailedView: function () {
-    	currentQuiz.set('hasAttempted',true);
-    	quizView.close();
-    	quizView = new QuizView({
-             model: currentQuiz,
-             index: 0,
-        });
-    },
-    
-    quizAnalyticsView: function () {
-        new QuizAnalyticsView({});
+    showView: function (selector, view) {
+        if (this.currentView) this.currentView.close();
+        $(selector).html(view.render().el);
+        this.currentView = view;
+        return view;
     },
 
-    practice: function (id) {
-    	practiceTests.reset();
-    	practiceQuestionSets.reset();
-        practiceQuestions.reset();
-        console.log('after reset before second fetch');
-        practiceTests.remote = false;
-        practiceTests.local = true;
-        practiceTests.fetch({
-        	success: function () {
-                 console.log('local quizzes fetched');
-                 practiceQuestionSets.remote = false;
-                 practiceQuestionSets.local = true;
-                 practiceQuestionSets.fetch({
-                     success: function () {
-                         console.log('local question sets fetched');
-                         practiceQuestions.remote = false;
-                         practiceQuestions.local = true;
-                         practiceQuestions.fetch({
-                             success: function () {
-                                 console.log('local questions fetched');
-                             }
-                         });
-                     }
-                 });
-             }
-         });
-        new PracticeTopicsView({
-            el: $('#content')
+    changePage: function (page) {
+        //note change in code here.
+        page.render();
+        $(page.el).attr('data-role', 'page');
+        $('body').append($(page.el));
+        $(page.el).page();
+        var transition = $.mobile.defaultPageTransition;
+        // We don't want to slide the first page
+        if (this.firstPage) {
+            transition = 'none';
+            this.firstPage = false;
+        }
+        $.mobile.changePage($(page.el), {
+            transition: 'none'
         });
-    },
-
-    startPractice: function (id) {
-        currentPractice = practiceTests.get(id);
-        var practiceView = new PracticeView({
-            model: currentPractice,
-            index: 0,
-            el: $('#content')
-        });
-    	timer.setUpdateFunction(helper.updatePracticeTimer, []);
-        timer.reset();
-        practiceView.renderQuestion();
-    },
-
+    }
 });
-
-if (Config.phonegap == false) {
-    $(document).ready(function () {
-        helper.loadTemplate(Config.viewsArray, function () {
-        	 $('body').append('<header></header><div id="content"></div>');
-            app = new AppRouter();
-            Backbone.history.start();
-        });
-    });
-}
-
-
-function init() {
-    //document.addEventListener("deviceready", onDeviceReady, true);
-}
-
-var onDeviceReady = function () {
-    helper.loadTemplate(Config.viewsArray, function () {
-        app = new AppRouter();
-        Backbone.history.start();
-    });
-};
