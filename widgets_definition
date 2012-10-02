@@ -1,0 +1,26 @@
+widgets?
+
+click opens modal. Write an inline hidden div. on clicking a link, call whatever. Simple Dialog for mobile, reveal for web. Or can simple dialog handle both?
+
+What about touch events and code? Other hooks. I'll have to write a way of including them. And then add that to DOM. Don't forget to unbind these.
+
+so what widgets do we have?
+
+
+0)Widgets
+-min-height, min-width, max-height, max-width
+-Modal on click
+-events for onLoad, onDisplay, onClick and other event binding
+-Styling defaults
+
+
+1) An image widget that
+-zooms to fullscreen on touch/click
+-has innovative labels. (Relatively Positioned on modal boxes? CSS?)
+---Second thoughts, who the fuck would ue that? Images would come with labels already, who'll scrub them?
+-
+
+2) Video widget
+-Similar
+
+3)

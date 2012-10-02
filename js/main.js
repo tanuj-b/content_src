@@ -61,6 +61,7 @@ var onDeviceReady = function () {
         if(Config.phonegap){
           window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, fileSystemAccess.gotFS, fileSystemAccess.fail);
         }
+        
         Backbone.history.start();
     });
 };

@@ -12,6 +12,10 @@ window.MainView = Backbone.View.extend({
 
 	},
 
+	onDOMLoaded : function () {
+		this.loadModalBox();
+	},
+
 	loadDataFile: function(loadFileName){
 		if(!loadFileName)
 		 	loadFileName = this.FileName;
@@ -48,7 +52,41 @@ window.MainView = Backbone.View.extend({
 		return result;
 	},
 
+	loadModalBox : function(){
+		
+		
+	    
+	    $('div[data-role="dialog"]').live('pagebeforeshow', function(e, ui) {
+		ui.prevPage.addClass("ui-dialog-background "); // will need to change to whatever.
+		});
 
+	    $('div[data-role="dialog"]').live('pagehide', function(e, ui) {
+		$(".ui-dialog-background ").removeClass("ui-dialog-background ");
+		});
+
+		$(document).delegate('#opendialog', 'click', function() {
+			  // NOTE: The selector can be whatever you like, so long as it is an HTML element.
+			  //       If you prefer, it can be a member of the current page, or an anonymous div
+			  //       like shown.
+	  		$('<div>').simpledialog2({
+			    mode: 'blank',
+			    headerText: 'Some Stuff',
+			    headerClose: true,
+			    blankContent : 
+			      "<ul data-role='listview'><li>Some</li><li>List</li><li>Items</li></ul>"+
+			      // NOTE: the use of rel="close" causes this button to close the dialog.
+			      "<a rel='close' data-role='button' href='#'>Close</a>"
+
+			    		/* //or use inline content
+				<div id="inlinecontent" style="display:none" 
+			  	data-options='{"mode":"blank","headerText":"Yo","headerClose":true,"blankContent":true}'>
+				<ul data-role='listview'><li>Some</li><li>List</li><li>Items</li></ul>
+			    <a rel='close' data-role='button' href='#'>Close</a>
+				</div>
+				*/
+			  });
+			});
+	},
 
 	loadTopic: function(loadFileName, topicID){
 		var context = this;
@@ -63,6 +101,35 @@ window.MainView = Backbone.View.extend({
 
 		var contentBox = $(targetSelector);
 		//targetSelector should default to .slides
+
+
+/***************** 
+					BEGIN JUGAAD : How to load and execute scripts when needed?
+					Currently adding scripts along with other data in a <scipt> tag maybe should switch to .js file? I don't know how that helps
+******************/
+		//var script = $(topicRawData)[0].innerHTML.match(new RegExp("<scipt[^>]*>[^<]*</scipt>","g")); //or jquery selector for scipt?
+		var scripts = $(topicRawData).find("scipt");
+
+	    if (scripts != null)
+	    {
+	    	_.each(scripts,function(item){
+	    		if($(item).attr("src"))
+	    		{
+	    			//has a src attribute. load js file?
+	    		}
+	    		else
+	    		{
+	        	eval(item.innerHTML); //Run Javascript. Security?
+	        	$(item).remove(); ///But these tags won't just disappear.
+	        	}
+	    	});
+	        
+	    }
+	    
+/***************** 
+				END JUGAAD: 
+*****************/
+
 		var fragments = $(topicRawData).find(".fragment");
 		
 	    var newSection = $('<section>');
@@ -77,11 +144,32 @@ window.MainView = Backbone.View.extend({
 	        	{
 	        		newSection.html(sectionHTML);
 	        		newSection.clone().insertBefore(newSection);
+	        		//code to empty new clone of all classes
+	        		newSection.attr('class', "");
 		            sectionHTML = null;
 		        }
 		            continue;
 	        }
 	     	
+	     	//check if fragment is type widget
+
+	     	if($(fragments[i]).attr("ps-widget"))
+	     	{
+	     		//Scripts already been loaded
+	     		//Get config
+	     		var widgetConfig = widgetConfig = {
+					type: $(fragments[i]).attr("ps-widget"),
+					minHeight: $(fragments[i]).attr("ps-min-h"),
+					maxHeight: $(fragments[i]).attr("ps-max-h"),
+					minWidth: $(fragments[i]).attr("ps-min-w"),
+					maxWidth: $(fragments[i]).attr("ps-max-w"),
+					eventCaller: $(fragments[i]).attr("id")
+				};
+	     		//add classes
+	     		newSection.addClass(widgetConfig.eventCaller);
+
+	     		//
+	     	}
 		        var enhancedSection = (sectionHTML? sectionHTML : "")+ window.helper.completeHTML(fragments[i]);
 		        //better method to laod html needed. Or assume always fragment, and load other way.
 		        newSection.html(enhancedSection);
@@ -90,14 +178,16 @@ window.MainView = Backbone.View.extend({
 		        	if(sectionHTML)
 		            	{newSection.html(sectionHTML);}
 		            newSection.clone().insertBefore(newSection);
+		            newSection.attr('class', ""); //remove all classes
 		            sectionHTML = null;
+		            i--;
 		        } else {
 		            sectionHTML = enhancedSection;             
 		        }
 	    }
+
 	    //make first fragments of all sections not fragments
 	    $(contentBox).find("section .fragment:first-child").removeClass("fragment");
-
 	    return contentBox.html();   
 	},
 
@@ -133,6 +223,7 @@ window.MainView = Backbone.View.extend({
 		$(this.el).html(this.template({slides: slides}));
 		return this;
 	},
+
 	renderTemp : function(){
 		var context = this;
 		var temp = "<section>Loading Slides</section>";

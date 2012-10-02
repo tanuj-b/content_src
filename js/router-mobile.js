@@ -136,5 +136,5 @@ var AppRouter = Backbone.Router.extend({
         $.mobile.changePage($(page.el), {
             transition: 'none'
         });
-    }
+      }
 });
