@@ -1,5 +1,5 @@
 <data>
-<topic id="1" title="Topic 1" description="This is the first topic">
+<topic id="1" title="Topic 1" description="This is the first topic" level="1">
 				<div class="fragment">
 				Fragment number 01. This is Fragment number xx. This has :
 				</div>
@@ -7,23 +7,30 @@
 				<div class="fragment" pagebreak="true"></div>
 				<div class="fragment">
 				Fragment number 02. This is Fragment number xx. This has :
-				<scipt type="text/javascript">
+				<script type="text/javascript">
 					console.log("hello");
-				</scipt>
+				</script>
 				</div>
 				<div class="fragment">
 				Fragment number 03. This is Fragment number xx. This has :
 				</div>
+				<div class="fragment" pagebreak="topic"></div>
+				<topic id="22" title="Subtopic of 1" description="Yaaron do Yaar" level="2">
+
 				<div class="fragment" id="frag-12">
 				Fragment number 04. This is Fragment number xx. This has :
-				<scipt type="text/javascript">
+				<script type="text/javascript">
 					Reveal.addEventListener( 'fragmentshown', function( event ) {
     					console.log("Fragment shown.")
     					if($(event.fragment).attr("id") == "frag-12")
     						{alert("fraggment 4 was just shown. Cool!");}
 					} );
-				</scipt>
+				</script>
 				</div>
+				<topic id="33" title="Sub-Subtopic 1" level="3"><div class="fragment">Hi i'm in sub=sub=topic 1</div></topic>
+				</topic>
+				
+
 				<div class="fragment">
 				Fragment number 05. This is Fragment number xx. This has :
 				</div>

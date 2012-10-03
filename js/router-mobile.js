@@ -32,7 +32,8 @@ var AppRouter = Backbone.Router.extend({
     },
 
     main: function () {
-        this.changePage(new MainView());
+        var currentMainView = new MainView();
+        this.changePage(currentMainView);
 
         Reveal.initialize({
         controls: true,
@@ -49,7 +50,15 @@ var AppRouter = Backbone.Router.extend({
   
       });
 
-
+    while(currentMainView.scripts.length > 0)
+    {
+        eval(currentMainView.scripts.pop());
+    }
+    
+    $(document).bind('textselect', function (evt, string, element) {
+        if (string != "") alert('Selected text (' + element.tagName + '): ' + string);
+    });
+    
     },
     
     flashcardlist: function () {

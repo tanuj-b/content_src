@@ -3,10 +3,18 @@ window.MainView = Backbone.View.extend({
 	topicData : null,
 	FileName : null,
 	TOC: null,
+	scripts: [],
 
 	initialize : function() {
 		// this.render();
+		var context = this;
+		$(document).bind('textselect', context.textSelectHandler);
+    
 	},
+
+	textSelectHandler : function (evt, string, element) {
+        	//function to launch menu here.
+    },
 
 	events : {
 
@@ -29,11 +37,9 @@ window.MainView = Backbone.View.extend({
                         url: Config.assetPath+Config.tmplatesFolder+'/'+loadFileName+'.xml',
                         async: false,
                     }).done(function (data) {
-						context.topicData = data;
+						context.topicData = context.scrubScripts(data);
 						context.FileName = loadFileName;
 						context.TOC = context.buildTOC(data);
-						console.log(context.TOC);
-						console.log(context.renderTOC(context.TOC,"",1));
                     });
 	},
 
@@ -45,7 +51,10 @@ window.MainView = Backbone.View.extend({
 
 		if(subTopics.length!==0)
 			_.each(subTopics,function(item){
-				result[$(item).attr('id')] = {title: $(item).attr('title'), description: $(item).attr('description') , subTopics: context.buildTOC(item)};
+				result[$(item).attr('id')] = {
+							title: $(item).attr('title'),
+							description: $(item).attr('description') ,
+							subTopics: context.buildTOC(item)};
 			});
 		else
 			return null;
@@ -88,6 +97,39 @@ window.MainView = Backbone.View.extend({
 			});
 	},
 
+	scrubScripts: function(topicRawData){
+		/***************** 
+					BEGIN JUGAAD : How to load and execute scripts when needed?
+					Currently adding scripts along with other data in a <scipt> tag maybe should switch to .js file? I don't know how that helps
+******************/
+		//var script = $(topicRawData)[0].innerHTML.match(new RegExp("<scipt[^>]*>[^<]*</scipt>","g")); //or jquery selector for scipt?
+		var context = this;
+
+		var tempscripts = _.rest($(topicRawData));
+
+	    if (tempscripts)
+	    {
+	    	_.each(tempscripts,function(item){
+	    		if($(item).attr("src"))
+	    		{
+	    			//has a src attribute. load js file?
+	    		}
+	    		else
+	    		{
+	        	context.scripts.push(item.innerHTML); //Run Javascript. Security?
+	        	$(item).remove(); ///But these tags won't just disappear.
+	        	}
+	    	});
+	        
+	    }
+	    return $(topicRawData)[0];
+	    
+/***************** 
+				END JUGAAD: 
+*****************/
+
+	},
+
 	loadTopic: function(loadFileName, topicID){
 		var context = this;
 		if(!context.topicData||loadFileName==context.FileName)
@@ -102,36 +144,10 @@ window.MainView = Backbone.View.extend({
 		var contentBox = $(targetSelector);
 		//targetSelector should default to .slides
 
-
-/***************** 
-					BEGIN JUGAAD : How to load and execute scripts when needed?
-					Currently adding scripts along with other data in a <scipt> tag maybe should switch to .js file? I don't know how that helps
-******************/
-		//var script = $(topicRawData)[0].innerHTML.match(new RegExp("<scipt[^>]*>[^<]*</scipt>","g")); //or jquery selector for scipt?
-		var scripts = $(topicRawData).find("scipt");
-
-	    if (scripts != null)
-	    {
-	    	_.each(scripts,function(item){
-	    		if($(item).attr("src"))
-	    		{
-	    			//has a src attribute. load js file?
-	    		}
-	    		else
-	    		{
-	        	eval(item.innerHTML); //Run Javascript. Security?
-	        	$(item).remove(); ///But these tags won't just disappear.
-	        	}
-	    	});
-	        
-	    }
-	    
-/***************** 
-				END JUGAAD: 
-*****************/
-
-		var fragments = $(topicRawData).find(".fragment");
-		
+		//var fragments = $(topicRawData).find(".fragment");
+		var fragments = $(topicRawData).find("topic, .fragment");
+		var topictitle =  $("<div class='fragment topic-header-level-"+$(topicRawData).attr("level")+"'>").html($(topicRawData).attr("title"));
+		fragments = topictitle.add(fragments);
 	    var newSection = $('<section>');
 	    contentBox.empty().append(newSection);
 	    var sectionHTML = null;
@@ -150,6 +166,28 @@ window.MainView = Backbone.View.extend({
 		        }
 		            continue;
 	        }
+	        //check if fragment is topic
+
+	        if($(fragments[i])[0].tagName == "TOPIC")
+	        {
+	        	var breakAtTopic = true;
+	        	var breakAtTopicLevelMax = 2;
+
+	        	if(breakAtTopic && sectionHTML && $(fragments[i]).attr("level")<=breakAtTopicLevelMax) //require break at topic and no content is already present
+	        	{
+	        		newSection.html(sectionHTML);
+	        		newSection.clone().insertBefore(newSection);
+	        		//code to empty new clone of all classes
+	        		newSection.attr('class', "");
+		            sectionHTML = null;
+		        }
+		        if($(fragments[i]).attr("title"))
+	        		fragments[i] = $("<div class='fragment topic-header-level-"+$(fragments[i]).attr("level")+"'>").html($(fragments[i]).attr("title"));
+	        	else
+	        		continue;
+	        }
+
+
 	     	
 	     	//check if fragment is type widget
 
@@ -188,7 +226,7 @@ window.MainView = Backbone.View.extend({
 
 	    //make first fragments of all sections not fragments
 	    $(contentBox).find("section .fragment:first-child").removeClass("fragment");
-	    return contentBox.html();   
+	    return contentBox.html();
 	},
 
 	renderTOC: function(TOCData,index,level){
@@ -197,14 +235,18 @@ window.MainView = Backbone.View.extend({
 		var i=1;
 		if(!TOCData)
 			return null;
+		if(index !== "")
+		{
+			index= index+"."
+		}
 
 		$.each(TOCData,function(key,value)
 		{
-			result = (result ? result : ("")) + "<li><a href='#' id='"+key+"'><span class='TOC_title_l"+level+"'>"+index+"."+i+"]"+value.title+"</span>"
+			result = (result ? result : ("")) + "<li><a href='#' id='"+key+"'><span class='TOC_title_l"+level+"'>"+index+i+"]"+value.title+"</span><br />"
 							+ "<span class='TOC_desc_l"+level+"'>"+value.description+ "</span></a>"
-							+ (context.renderTOC(value.subTopics,index+"."+i,level+1)? context.renderTOC(value.subTopics,index+"."+i,level+1) : "") + "</li>";
+							+ (context.renderTOC(value.subTopics,index+i,level+1)? context.renderTOC(value.subTopics,index+i,level+1) : "") + "</li>";
 			i++;
-		})
+		});
 		if(result)
 			result = "<ul class='TOC_l"+level+"'>" + result + "</ul>";
 
@@ -220,14 +262,19 @@ window.MainView = Backbone.View.extend({
 		var slides = context.parseIntoSections(topicToDisplayData,$(this.el).find(".slides"),window.heightForContent);
 
 		//should not be window height but some other number?
-		$(this.el).html(this.template({slides: slides}));
+		$(this.el).html(this.template({slides: slides, toc: context.renderTOC(context.TOC,"",1)}));
 		return this;
 	},
+
+	cleanup: function(){
+		var context= this;
+		$(document).unbind('textselect',this.textSelectHandler);
+	}
 
 	renderTemp : function(){
 		var context = this;
 		var temp = "<section>Loading Slides</section>";
-		$(context.el).html(context.template({slides: temp}));
+		$(context.el).html(context.template({slides: temp, toc: temp}));
 		$(context.el).attr('data-role', 'page');
         $('body').append($(context.el));
         $(context.el).page();
