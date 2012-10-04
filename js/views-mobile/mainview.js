@@ -3,21 +3,48 @@ window.MainView = Backbone.View.extend({
 	topicData : null,
 	FileName : null,
 	TOC: null,
+	DefList : null,
 	scripts: [],
+	currentFragment: null,
+	previousFragment: null,
 
 	initialize : function() {
 		// this.render();
 		var context = this;
-		$(document).bind('textselect', context.textSelectHandler);
-    
+		$(document).bind('textselect.mainview', context.textSelectHandler);
 	},
 
 	textSelectHandler : function (evt, string, element) {
         	//function to launch menu here.
+
     },
 
 	events : {
+		"click a.hotlink": "hotLinker"
+	},
 
+	hotLinker : function (evt){
+
+		linkedTopicID = $(evt.currentTarget).attr("id");
+
+		if(linkedTopicID == "back-to-topic")
+			if(this.previousFragment)
+				linkedTopicID = this.previousFragment;
+			else
+			{evt.preventDefault();return;}
+		else
+			linkedTopicID = linkedTopicID.substring(5);
+
+		this.previousFragment = this.currentFragment;
+		selector = "#" + linkedTopicID;
+		this.goToSectionContaining(selector);
+		evt.preventDefault();
+	},
+
+	goToSectionContaining : function(selecterr){
+		Reveal.navigateTo($(selecterr).parents("section").attr("pgno")-1,0);
+		while($(selecterr).hasClass("fragment")&& ! $(selecterr).hasClass("visible") )
+			Reveal.navigateRight();	
 	},
 
 	onDOMLoaded : function () {
@@ -40,6 +67,7 @@ window.MainView = Backbone.View.extend({
 						context.topicData = context.scrubScripts(data);
 						context.FileName = loadFileName;
 						context.TOC = context.buildTOC(data);
+						context.DefList = context.buildDefList(data);
                     });
 	},
 
@@ -58,6 +86,24 @@ window.MainView = Backbone.View.extend({
 			});
 		else
 			return null;
+		return result;
+	},
+
+	buildDefList : function(data)
+	{
+		var context = this,
+			subTopics = $(data).find(".def"),
+			result = {};
+
+		if(subTopics.length!==0)
+			_.each(subTopics,function(item){
+				result[$(item).attr('id')] = {
+							name: $(item).find(".def-name")[0].innerHTML,
+							mean: $(item).find(".def-mean")[0].innerHTML
+			}});
+		else
+			return null;
+
 		return result;
 	},
 
@@ -146,7 +192,9 @@ window.MainView = Backbone.View.extend({
 
 		//var fragments = $(topicRawData).find(".fragment");
 		var fragments = $(topicRawData).find("topic, .fragment");
-		var topictitle =  $("<div class='fragment topic-header-level-"+$(topicRawData).attr("level")+"'>").html($(topicRawData).attr("title"));
+		var topictitle =  $("<div class='fragment topic-header-level-"+$(topicRawData).attr("level")+
+							"' id='"+$(topicRawData).attr("id")+"'>").html($(topicRawData).attr("title"));
+
 		fragments = topictitle.add(fragments);
 	    var newSection = $('<section>');
 	    contentBox.empty().append(newSection);
@@ -182,7 +230,12 @@ window.MainView = Backbone.View.extend({
 		            sectionHTML = null;
 		        }
 		        if($(fragments[i]).attr("title"))
-	        		fragments[i] = $("<div class='fragment topic-header-level-"+$(fragments[i]).attr("level")+"'>").html($(fragments[i]).attr("title"));
+	       		{
+	       			var newSelector = "<div class='fragment topic-header-level-"+$(fragments[i]).attr("level")+"'>";
+	       			var tempID = $(fragments[i]).attr("id");
+        			fragments[i] = $(newSelector).html($(fragments[i]).attr("title"));
+        			fragments[i] = $(fragments[i]).attr("id",tempID)
+        		}
 	        	else
 	        		continue;
 	        }
@@ -226,6 +279,11 @@ window.MainView = Backbone.View.extend({
 
 	    //make first fragments of all sections not fragments
 	    $(contentBox).find("section .fragment:first-child").removeClass("fragment");
+	    var k=0;
+	    _.each($(contentBox).find("section"),function(item){
+	    	item = $(item).attr("pgno",++k);
+	    });
+
 	    return contentBox.html();
 	},
 
@@ -242,13 +300,33 @@ window.MainView = Backbone.View.extend({
 
 		$.each(TOCData,function(key,value)
 		{
-			result = (result ? result : ("")) + "<li><a href='#' id='"+key+"'><span class='TOC_title_l"+level+"'>"+index+i+"]"+value.title+"</span><br />"
+			result = (result ? result : ("")) + "<li><a href='#' class='hotlink' id='link-"+key+"'><span class='TOC_title_l"+level+"'>"+index+i+"]"+value.title+"</span><br />"
 							+ "<span class='TOC_desc_l"+level+"'>"+value.description+ "</span></a>"
 							+ (context.renderTOC(value.subTopics,index+i,level+1)? context.renderTOC(value.subTopics,index+i,level+1) : "") + "</li>";
 			i++;
 		});
 		if(result)
-			result = "<ul class='TOC_l"+level+"'>" + result + "</ul>";
+			result = "<a class='hotlink' id='back-to-topic' href='#'>Back</a><ul class='TOC_l"+level+"'>" + result + "</ul>";
+
+		return result;
+	},
+
+	renderDefList : function(data){
+		var context=this;
+		var result = null;
+		var i=1;
+		if(!data)
+			return null;
+
+
+		$.each(data,function(key,value)
+		{
+			result = (result ? result : ("")) + "<li><a href='#' class='hotlink' id='link-"+key+"'><span class='deflist-name'>"+value.name+"</span><br />"
+							+ "<span class='def-mean'>"+value.mean+ "</span></a></li>";
+			i++;
+		});
+		if(result)
+			result = "<ul class='deflist'>" + result + "</ul>";
 
 		return result;
 	},
@@ -256,25 +334,25 @@ window.MainView = Backbone.View.extend({
 	render : function() {
 		
 		var context = this;
-		var topicToDisplayData = context.loadTopic("sample_data_2","1");
+		var topicToDisplayData = context.loadTopic("sample_data_2","t1");
 		context.renderTemp();
 		
 		var slides = context.parseIntoSections(topicToDisplayData,$(this.el).find(".slides"),window.heightForContent);
 
 		//should not be window height but some other number?
-		$(this.el).html(this.template({slides: slides, toc: context.renderTOC(context.TOC,"",1)}));
+		$(this.el).html(this.template({slides: slides, toc: context.renderTOC(context.TOC,"",1), DefList : context.renderDefList(context.DefList)}));
 		return this;
 	},
 
 	cleanup: function(){
-		var context= this;
-		$(document).unbind('textselect',this.textSelectHandler);
-	}
+		
+		$(document).unbind('textselect.mainview');
+	},
 
 	renderTemp : function(){
 		var context = this;
 		var temp = "<section>Loading Slides</section>";
-		$(context.el).html(context.template({slides: temp, toc: temp}));
+		$(context.el).html(context.template({slides: temp, toc: temp, DefList : temp}));
 		$(context.el).attr('data-role', 'page');
         $('body').append($(context.el));
         $(context.el).page();

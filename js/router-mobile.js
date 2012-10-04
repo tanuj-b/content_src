@@ -55,10 +55,15 @@ var AppRouter = Backbone.Router.extend({
         eval(currentMainView.scripts.pop());
     }
     
-    $(document).bind('textselect', function (evt, string, element) {
-        if (string != "") alert('Selected text (' + element.tagName + '): ' + string);
-    });
-    
+    Reveal.addEventListener( 'fragmentshown', function( event ) {
+                        currentMainView.currentFragment = $(event.fragment).attr("id");
+                    }
+                 );
+
+    Reveal.addEventListener( 'slidechanged', function( event ) {
+        pgno = event.indexh+1;
+        currentMainView.currentFragment = $(".slides").find("section[pgno="+pgno+"] :first-child").attr("id");
+    } );
     },
     
     flashcardlist: function () {
